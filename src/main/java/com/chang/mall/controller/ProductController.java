@@ -5,31 +5,45 @@ import com.chang.mall.dto.ProductRequest;
 import com.chang.mall.entity.Product;
 import com.chang.mall.service.ProductService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
+@Validated
 @RestController
 public class ProductController {
 
     @Autowired
     private ProductService productService;
 
+    // 查詢商品列表
     @GetMapping("/products")
-    public ResponseEntity<List<Product>> getProducts2(@RequestParam(required = false) String search,
-                                                      @RequestParam(required = false) ProductCategory productCategory,
-                                                      @RequestParam(required = false) String orderBy,
-                                                      @RequestParam(defaultValue = "DESC") String sortDirection) {
+    public ResponseEntity<Page<Product>> getProducts(
+            // 查詢條件
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) ProductCategory productCategory,
 
-        List<Product> products = productService.getProducts(search, productCategory, orderBy, sortDirection);
+            // 排序
+            @RequestParam(required = false) String orderBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection,
+
+            // 分頁
+            @RequestParam(defaultValue = "0") @Min(0) Integer page,
+            @RequestParam(defaultValue = "10") @Max(50) @Min(1) Integer size) {
+
+        Page<Product> products = productService.getProducts(search, productCategory, orderBy, sortDirection, page, size);
 
         return ResponseEntity.status(HttpStatus.OK).body(products);
     }
 
+    // 查詢單一商品
     @GetMapping("/products/{productId}")
     public ResponseEntity<Product> getProduct(@PathVariable Integer productId) {
 
@@ -43,6 +57,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
+    // 新增單一商品
     @PostMapping("/products")
     public ResponseEntity<Product> createProduct(@RequestBody @Valid ProductRequest productRequest) {
 
@@ -51,6 +66,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(product);
     }
 
+    // 更新單一商品
     @PutMapping("/products/{productId}")
     public ResponseEntity<Product> updateProduct(@PathVariable Integer productId,
                                                  @RequestBody @Valid ProductRequest productRequest) {
@@ -68,6 +84,7 @@ public class ProductController {
 
     }
 
+    // 刪除單一商品
     @DeleteMapping("/products/{productId}")
     public ResponseEntity<?> deleteProduct(@PathVariable Integer productId) {
 
